@@ -11,24 +11,12 @@ WINDOW = 10
 
 clients = {}
 
-# redirect_slashes=False prevents FastAPI from 307-redirecting
-# /ping/ -> /ping (or vice versa), which can silently break
-# cross-origin fetch() calls that don't follow redirects with CORS headers intact
 app = FastAPI(redirect_slashes=False)
 
 allowed_origins = [
     "https://app-beuqij.example.com",
     "https://exam.sanand.workers.dev"
 ]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=allowed_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-    expose_headers=["X-Request-ID"],
-)
 
 
 @app.middleware("http")
@@ -66,9 +54,21 @@ async def rate_limiter(request: Request, call_next):
     return await call_next(request)
 
 
+# Registered LAST so it becomes the OUTERMOST middleware,
+# guaranteeing CORS headers are applied even on early-return
+# responses (like 429) from the middlewares above.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["X-Request-ID"],
+)
+
+
 @app.get("/")
 async def root():
-    # avoids noisy 404s in logs from Render's own health checks / HEAD probes
     return {"status": "ok"}
 
 
@@ -82,8 +82,6 @@ async def ping(request: Request):
     )
 
 
-# Handle both /ping and /ping/ explicitly, in case the grader
-# appends a trailing slash
 @app.get("/ping/")
 async def ping_slash(request: Request):
     return await ping(request)
