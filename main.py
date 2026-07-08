@@ -24,8 +24,8 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["X-Request-ID"],   # <-- this line fixes it
 )
-
 
 @app.middleware("http")
 async def request_context(request: Request, call_next):
