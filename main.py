@@ -15,7 +15,7 @@ app = FastAPI()
 
 allowed_origins = [
     "https://app-beuqij.example.com",
-    "https://exam.sanand.workers.dev/"
+    "https://exam.sanand.workers.dev"
 ]
 
 app.add_middleware(
